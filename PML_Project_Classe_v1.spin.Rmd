@@ -1,6 +1,6 @@
 
 ```{r }
-# Project for Practical Machine Learning, 2015 April, Amos
+# Project for Practical Machine Learning, 2015 April
 #
 # Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to 
 # collect a large amount of data about personal activity relatively inexpensively. 
@@ -13,9 +13,9 @@
 # 6 participants. They were asked to perform barbell lifts correctly and incorrectly 
 # in 5 different ways.
 #
-# This report shows how a model is bulit, its cross validation, the expected 
-# out-of-sample error and model choices. In the end the prediction model is used 
-# to predict 20 different test cases. 
+# This report shows how a model is built to predict "classe, the outcome variable.  
+# We will also look at cross validation, the expected out-of-sample error and model 
+# choices. Lastly the prediction model is used to predict 20 different test cases. 
 
 # The data for this project come from this source: 
 # http://groupware.les.inf.puc-rio.br/har. 
@@ -29,9 +29,9 @@ table(train$classe)
 library(caret)
 
 set.seed(999)
-partList = createDataPartition(train$classe, p = 0.7, list = FALSE)
-trainingSet = train[partList,]
-validationSet = train[-partList,]
+inTrain = createDataPartition(train$classe, p = 0.7, list = FALSE)
+trainingSet = train[inTrain,]
+validationSet = train[-inTrain,]
 
 
 # Cleaning up the data:
@@ -72,43 +72,45 @@ dim(test)
 # [1] Build CART Model on training set
 #
 library(rpart)
-cartModel = rpart(classe ~ ., data = trainingSet, method = "class", 
+modCART = rpart(classe ~ ., data = trainingSet, method = "class", 
                   cp = 0.001)
 
 # Training set accuracy using CART Model
 #
-trainingPredict1 = predict(cartModel, type = "class")
+trainingPredict1 = predict(modCART, data = trainingSet, type = "class")
 print(confusionMatrix(trainingPredict1, trainingSet$classe))
 
 
 # [2] Build Random-Forest Model on training set
+# I am using 8 year-old laptop running RF below, so I just choose low but good enough 
+# parameters that do not require too high proccessing power
 #
 library(randomForest)
-rfModel <- randomForest(classe ~ ., data = trainingSet, 
-                        importance = TRUE, ntrees = 10)
+modRF <- randomForest(classe ~ ., data = trainingSet, importance = TRUE, 
+                      ntrees = 20, nodesize = 10)
 
 # Training set accuracy using RF Model
 #
-trainingPredict <- predict(rfModel, trainingSet)
+trainingPredict <- predict(modRF, data = trainingSet)
 print(confusionMatrix(trainingPredict, trainingSet$classe))
 
 # Accuracy of validation set (Out of Sample)
 #
-validationPredict <- predict(rfModel, validationSet)
+validationPredict <- predict(modRF, newdata = validationSet)
 print(confusionMatrix(validationPredict, validationSet$classe))
 
 
 # Result:
 # Random-Forest Model is preferred over CART Model as it has higher training
-# set accuracy.
-# Using Random-Forest Model, the cross validation accuracy is 99.54% and 
-# therefore the expected out-of-sample error is 0.46% (100% - 99.54%).
+# set accuracy: (99.21% vs 91.8%). 
+# Using Random-Forest Model, the cross validation accuracy is 99.37% and 
+# therefore the expected out-of-sample error is 0.63% (100% - 99.37%).
 # This model is selected to predict classe variable in the given test set.
 
 
 # Prediction on test set
 #
-testPredict <- predict(rfModel, test)
+testPredict <- predict(modRF, test)
 testPredict
 
 # Save answers onto files for later submission
@@ -127,7 +129,7 @@ pml_write_files(as.vector(testPredict))
 
 
 ---
-title: "PML_Project_Writeup.R"
+title: "PML_Project_Classe_v1.R"
 author: "song"
-date: "Sat Apr 25 16:49:18 2015"
+date: "Sun Apr 26 14:47:54 2015"
 ---
